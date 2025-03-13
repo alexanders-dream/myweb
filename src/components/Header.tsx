@@ -17,21 +17,6 @@ const Header = () => {
           <p className="text-xs text-muted-foreground">Digital Transformation Consultancy</p>
         </div>
       </div>
-      
-      <div className="flex items-center space-x-4">
-        <button className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-          Services
-        </button>
-        <button className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-          Case Studies
-        </button>
-        <button className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-          About
-        </button>
-        <button className="text-sm font-medium text-primary hover:text-primary/90 transition-colors">
-          Contact
-        </button>
-      </div>
     </header>
   );
 };

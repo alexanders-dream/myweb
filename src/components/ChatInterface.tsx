@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Send, Plus, Search, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Header from './Header';
 
 interface Message {
   id: string;
@@ -64,21 +62,18 @@ const ChatInterface = () => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSendMessage = () => {
     if (inputValue.trim()) {
-      // Add user message
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         type: 'user',
         content: inputValue
       }]);
       
-      // Simulate response after a brief delay
       setTimeout(() => {
         setMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
@@ -105,9 +100,6 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-full max-h-screen overflow-hidden bg-background">
-      <Header />
-      
-      {/* Main chat area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {messages.map((message) => (
           <div
@@ -123,7 +115,6 @@ const ChatInterface = () => {
         <div ref={messagesEndRef} />
       </div>
       
-      {/* Input area */}
       <div className="border-t border-border bg-card p-4">
         <div className="max-w-3xl mx-auto flex flex-col space-y-2">
           <div className="relative">
