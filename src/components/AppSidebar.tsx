@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Sidebar, 
   SidebarContent, 
@@ -10,10 +10,28 @@ import {
   SidebarFooter
 } from '@/components/ui/sidebar';
 import { Link } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { 
+  BookOpen, 
+  BriefcaseIcon, 
+  UserCircle, 
+  MessageSquare, 
+  ChevronDown, 
+  ChevronRight,
+  BrainCircuit,
+  Layers,
+  Database
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const AppSidebar = () => {
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -33,15 +51,45 @@ const AppSidebar = () => {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link to="/">
-                <span>Services</span>
-              </Link>
+            <SidebarMenuButton 
+              className="relative group"
+              onClick={() => setIsServicesOpen(!isServicesOpen)}
+            >
+              <BriefcaseIcon className="mr-2" />
+              <span>Services</span>
+              {isServicesOpen ? 
+                <ChevronDown className="ml-auto h-5 w-5" /> : 
+                <ChevronRight className="ml-auto h-5 w-5" />
+              }
             </SidebarMenuButton>
+
+            {isServicesOpen && (
+              <div className="ml-6 mt-2 space-y-2">
+                <SidebarMenuButton asChild>
+                  <Link to="/services/ai" className="flex items-center">
+                    <BrainCircuit className="mr-2 h-4 w-4" />
+                    <span>AI Solutions</span>
+                  </Link>
+                </SidebarMenuButton>
+                <SidebarMenuButton asChild>
+                  <Link to="/services/xr" className="flex items-center">
+                    <Layers className="mr-2 h-4 w-4" />
+                    <span>XR Development</span>
+                  </Link>
+                </SidebarMenuButton>
+                <SidebarMenuButton asChild>
+                  <Link to="/services/data" className="flex items-center">
+                    <Database className="mr-2 h-4 w-4" />
+                    <span>Data Analytics</span>
+                  </Link>
+                </SidebarMenuButton>
+              </div>
+            )}
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link to="/">
+                <BriefcaseIcon className="mr-2" />
                 <span>Case Studies</span>
               </Link>
             </SidebarMenuButton>
@@ -57,6 +105,7 @@ const AppSidebar = () => {
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link to="/">
+                <UserCircle className="mr-2" />
                 <span>About</span>
               </Link>
             </SidebarMenuButton>
@@ -64,6 +113,7 @@ const AppSidebar = () => {
           <SidebarMenuItem>
             <SidebarMenuButton className="text-primary hover:text-primary/90" asChild>
               <Link to="/">
+                <MessageSquare className="mr-2" />
                 <span>Contact</span>
               </Link>
             </SidebarMenuButton>
