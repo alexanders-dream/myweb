@@ -9,6 +9,8 @@ import {
   SidebarMenuButton,
   SidebarFooter
 } from '@/components/ui/sidebar';
+import { Link } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const AppSidebar = () => {
@@ -31,23 +33,39 @@ const AppSidebar = () => {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton>
-              <span>Services</span>
+            <SidebarMenuButton asChild>
+              <Link to="/">
+                <span>Services</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton>
-              <span>Case Studies</span>
+            <SidebarMenuButton asChild>
+              <Link to="/">
+                <span>Case Studies</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton>
-              <span>About</span>
+            <SidebarMenuButton asChild>
+              <Link to="/blog">
+                <BookOpen className="mr-2" />
+                <span>Blog</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton className="text-primary hover:text-primary/90">
-              <span>Contact</span>
+            <SidebarMenuButton asChild>
+              <Link to="/">
+                <span>About</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton className="text-primary hover:text-primary/90" asChild>
+              <Link to="/">
+                <span>Contact</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
