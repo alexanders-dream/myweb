@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowRight, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import InstagramEmbed from './InstagramEmbed';
 
 interface CaseStudy {
   id: string;
@@ -194,6 +195,23 @@ const Portfolio = () => {
                     </a>
                   </div>
                 </div>
+              </div>
+            </div>
+            
+            {/* Instagram Embed Section */}
+            <div className="mt-20">
+              <div className="text-center mb-10">
+                <h3 className="text-2xl md:text-3xl font-bold mb-4">Follow Our Journey</h3>
+                <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                  Check out our Instagram for behind-the-scenes content, project updates, and industry insights.
+                </p>
+              </div>
+              
+              <div className="flex justify-center">
+                <InstagramEmbed 
+                  username="iamthemcee" 
+                  className="mx-auto w-full max-w-xl shadow-xl rounded-xl overflow-hidden transform transition-all duration-300 hover:shadow-2xl"
+                />
               </div>
             </div>
           </>
