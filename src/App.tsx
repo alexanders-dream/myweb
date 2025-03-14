@@ -8,6 +8,9 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Portfolio from "./pages/Portfolio";
 import AIService from "./pages/services/AIService";
 import XRService from "./pages/services/XRService";
 import MultimediaService from "./pages/services/MultimediaService";
@@ -33,6 +36,9 @@ const App = () => {
             <Route path="/" element={<Index />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/services/ai" element={<AIService />} />
             <Route path="/services/xr" element={<XRService />} />
             <Route path="/services/multimedia" element={<MultimediaService />} />

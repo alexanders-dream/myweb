@@ -89,9 +89,9 @@ const AppSidebar = () => {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link to="/">
+              <Link to="/portfolio">
                 <BriefcaseIcon className="mr-2" />
-                <span>Case Studies</span>
+                <span>Portfolio</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -105,7 +105,7 @@ const AppSidebar = () => {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link to="/">
+              <Link to="/about">
                 <UserCircle className="mr-2" />
                 <span>About</span>
               </Link>
@@ -113,7 +113,7 @@ const AppSidebar = () => {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton className="text-primary hover:text-primary/90" asChild>
-              <Link to="/">
+              <Link to="/contact">
                 <MessageSquare className="mr-2" />
                 <span>Contact</span>
               </Link>

@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import ContentEditor from '@/components/admin/ContentEditor';
 import ServicesEditor from '@/components/admin/ServicesEditor';
 import BlogPostEditor from '@/components/admin/BlogPostEditor';
+import PortfolioEditor from '@/components/admin/PortfolioEditor';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -125,6 +126,7 @@ const Admin = () => {
             <TabsList className="mb-6">
               <TabsTrigger value="content">Website Content</TabsTrigger>
               <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
               <TabsTrigger value="blog">Blog Posts</TabsTrigger>
             </TabsList>
             
@@ -134,6 +136,10 @@ const Admin = () => {
             
             <TabsContent value="services" className="space-y-4">
               <ServicesEditor />
+            </TabsContent>
+            
+            <TabsContent value="portfolio" className="space-y-4">
+              <PortfolioEditor />
             </TabsContent>
             
             <TabsContent value="blog" className="space-y-4">
