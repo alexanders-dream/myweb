@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Brain, Layers, Video, Globe, ArrowRight, Bot, Smartphone, Database, FileCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +17,7 @@ const Services = () => {
     {
       id: 'ai',
       icon: <Brain className="w-8 h-8" />,
-      title: 'Artificial Intelligence',
+      title: 'AI Solutions',
       description: 'Harness the power of AI to automate processes, gain insights, and create personalized experiences for your customers.',
       benefits: [
         'Predictive analytics and data modeling',
@@ -31,7 +30,7 @@ const Services = () => {
     {
       id: 'xr',
       icon: <Layers className="w-8 h-8" />,
-      title: 'Extended Reality (XR)',
+      title: 'XR Development',
       description: 'Create immersive experiences that blend digital and physical worlds using AR, VR, and MR technologies.',
       benefits: [
         'Virtual showrooms and product visualizations',
@@ -44,7 +43,7 @@ const Services = () => {
     {
       id: 'multimedia',
       icon: <Video className="w-8 h-8" />,
-      title: 'Multimedia Content',
+      title: 'Multimedia Production',
       description: 'Engage your audience with compelling multimedia content designed for the digital age.',
       benefits: [
         'Interactive storytelling experiences',
@@ -53,21 +52,21 @@ const Services = () => {
         'Digital marketing assets',
         'Social media content strategies'
       ]
-    },
-    {
-      id: 'digital',
-      icon: <Globe className="w-8 h-8" />,
-      title: 'Digital Transformation',
-      description: 'Strategically evolve your business with comprehensive digital transformation solutions.',
-      benefits: [
-        'Digital strategy development',
-        'Technology stack optimization',
-        'Business process digitization',
-        'Cloud migration services',
-        'Digital workplace solutions'
-      ]
     }
   ];
+  
+  useEffect(() => {
+    const savedServices = localStorage.getItem('siteServices');
+    if (savedServices) {
+      try {
+        const parsedServices = JSON.parse(savedServices);
+        // We'd need to handle the icon property correctly here in a real app
+        // For now, we'll keep the original services to preserve the icons
+      } catch (e) {
+        console.error('Failed to parse saved services', e);
+      }
+    }
+  }, []);
   
   const activeServiceData = services.find(service => service.id === activeService);
   

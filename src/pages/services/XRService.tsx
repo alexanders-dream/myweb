@@ -1,11 +1,30 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
 import PricingTiers from '@/components/PricingTiers';
+import VideoBackground from '@/components/VideoBackground';
 import { Layers, Glasses, Smartphone, GalleryHorizontal, Laptop, CaseSensitive } from 'lucide-react';
 
 const XRService = () => {
+  const [videoUrl, setVideoUrl] = useState('https://www.youtube.com/embed/2JgEzN7LYVo');
+  
+  // Try to load service data from localStorage
+  useEffect(() => {
+    const savedServices = localStorage.getItem('siteServices');
+    if (savedServices) {
+      try {
+        const parsedServices = JSON.parse(savedServices);
+        const xrService = parsedServices.find((s: any) => s.id === 'xr');
+        if (xrService && xrService.videoUrl) {
+          setVideoUrl(xrService.videoUrl);
+        }
+      } catch (e) {
+        console.error('Failed to parse saved services', e);
+      }
+    }
+  }, []);
+
   const pricingTiers = [
     {
       name: 'Basic',
@@ -63,9 +82,10 @@ const XRService = () => {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 overflow-auto">
-          <main className="max-w-7xl mx-auto px-4 py-12">
-            <div className="mb-16">
-              <h1 className="text-4xl font-bold mb-6">XR Development</h1>
+          <main>
+            <VideoBackground videoUrl={videoUrl} title="XR Development" />
+            
+            <div className="max-w-7xl mx-auto px-4 py-8">
               <p className="text-xl text-muted-foreground mb-8">
                 Create immersive experiences with augmented, virtual, and mixed reality solutions that transform how users interact with your brand.
               </p>
@@ -133,13 +153,13 @@ const XRService = () => {
                   <li className="text-lg">Deployment - Supporting launch across target platforms</li>
                 </ol>
               </div>
-            </div>
 
-            <PricingTiers 
-              serviceTitle="XR Development"
-              serviceDescription="Select the XR development package that aligns with your project requirements and business goals."
-              tiers={pricingTiers}
-            />
+              <PricingTiers 
+                serviceTitle="XR Development"
+                serviceDescription="Select the XR development package that aligns with your project requirements and business goals."
+                tiers={pricingTiers}
+              />
+            </div>
           </main>
         </div>
       </div>

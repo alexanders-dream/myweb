@@ -1,11 +1,30 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
 import PricingTiers from '@/components/PricingTiers';
+import VideoBackground from '@/components/VideoBackground';
 import { BrainCircuit, Sparkles, Bot, Database, Cpu, BarChart } from 'lucide-react';
 
 const AIService = () => {
+  const [videoUrl, setVideoUrl] = useState('https://www.youtube.com/embed/5p248yoa3oE');
+  
+  // Try to load service data from localStorage
+  useEffect(() => {
+    const savedServices = localStorage.getItem('siteServices');
+    if (savedServices) {
+      try {
+        const parsedServices = JSON.parse(savedServices);
+        const aiService = parsedServices.find((s: any) => s.id === 'ai');
+        if (aiService && aiService.videoUrl) {
+          setVideoUrl(aiService.videoUrl);
+        }
+      } catch (e) {
+        console.error('Failed to parse saved services', e);
+      }
+    }
+  }, []);
+
   const pricingTiers = [
     {
       name: 'Basic',
@@ -63,9 +82,10 @@ const AIService = () => {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 overflow-auto">
-          <main className="max-w-7xl mx-auto px-4 py-12">
-            <div className="mb-16">
-              <h1 className="text-4xl font-bold mb-6">AI Solutions</h1>
+          <main>
+            <VideoBackground videoUrl={videoUrl} title="AI Solutions" />
+            
+            <div className="max-w-7xl mx-auto px-4 py-8">
               <p className="text-xl text-muted-foreground mb-8">
                 Transform your business with cutting-edge artificial intelligence solutions tailored to your needs.
               </p>
@@ -133,13 +153,13 @@ const AIService = () => {
                   <li className="text-lg">Monitoring - Ensuring performance and continuous improvement</li>
                 </ol>
               </div>
-            </div>
 
-            <PricingTiers 
-              serviceTitle="AI Solutions"
-              serviceDescription="Choose the right plan for your artificial intelligence needs with our flexible pricing options."
-              tiers={pricingTiers}
-            />
+              <PricingTiers 
+                serviceTitle="AI Solutions"
+                serviceDescription="Choose the right plan for your artificial intelligence needs with our flexible pricing options."
+                tiers={pricingTiers}
+              />
+            </div>
           </main>
         </div>
       </div>

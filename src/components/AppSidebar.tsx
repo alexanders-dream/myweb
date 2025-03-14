@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sidebar, 
   SidebarContent, 
@@ -19,18 +19,19 @@ import {
   ChevronRight,
   BrainCircuit,
   Layers,
-  Database
+  Video,
+  LockKeyhole
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const AppSidebar = () => {
   const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const authStatus = localStorage.getItem('isAdminAuthenticated') === 'true';
+    setIsAuthenticated(authStatus);
+  }, []);
 
   return (
     <Sidebar>
@@ -78,9 +79,9 @@ const AppSidebar = () => {
                   </Link>
                 </SidebarMenuButton>
                 <SidebarMenuButton asChild>
-                  <Link to="/services/data" className="flex items-center">
-                    <Database className="mr-2 h-4 w-4" />
-                    <span>Data Analytics</span>
+                  <Link to="/services/multimedia" className="flex items-center">
+                    <Video className="mr-2 h-4 w-4" />
+                    <span>Multimedia Production</span>
                   </Link>
                 </SidebarMenuButton>
               </div>
@@ -115,6 +116,21 @@ const AppSidebar = () => {
               <Link to="/">
                 <MessageSquare className="mr-2" />
                 <span>Contact</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          {/* Admin panel link - conditionally styled */}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              className={cn(
+                isAuthenticated ? "text-green-500 hover:text-green-600" : "text-muted-foreground hover:text-foreground"
+              )} 
+              asChild
+            >
+              <Link to="/admin">
+                <LockKeyhole className="mr-2" />
+                <span>Admin Panel{isAuthenticated ? " (Logged In)" : ""}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
