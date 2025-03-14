@@ -9,7 +9,9 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import ContentEditor from '@/components/admin/ContentEditor';
 import ServicesEditor from '@/components/admin/ServicesEditor';
-import { useNavigate, Navigate } from 'react-router-dom';
+import BlogPostEditor from '@/components/admin/BlogPostEditor';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 type LoginInputs = {
   email: string;
@@ -111,12 +113,12 @@ const Admin = () => {
         <div className="flex-1 p-6 overflow-auto">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold">Admin Panel</h1>
-            <button
+            <Button
               onClick={handleLogout}
-              className="bg-destructive text-destructive-foreground px-4 py-2 rounded-md hover:bg-destructive/90 transition-colors"
+              variant="destructive"
             >
               Logout
-            </button>
+            </Button>
           </div>
           
           <Tabs defaultValue="content" className="w-full">
@@ -135,8 +137,7 @@ const Admin = () => {
             </TabsContent>
             
             <TabsContent value="blog" className="space-y-4">
-              <h2 className="text-xl font-semibold">Blog Post Management</h2>
-              <p className="text-muted-foreground">Coming soon...</p>
+              <BlogPostEditor />
             </TabsContent>
           </Tabs>
         </div>
