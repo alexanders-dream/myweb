@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -59,13 +60,10 @@ const sampleMessages: Message[] = [
   }
 ];
 
-const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>(sampleMessages);
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+// Separate the chat functionality into its own hook
+const useChatbot = () => {
   const { toast } = useToast();
-
+  
   // Get AI settings from localStorage (will be set in admin panel)
   const getAiSettings = () => {
     try {
@@ -93,43 +91,83 @@ const ChatInterface = () => {
     }
   };
 
+  // Get documents from localStorage
+  const getDocuments = () => {
+    try {
+      const documents = localStorage.getItem('knowledgeBaseDocs');
+      return documents ? JSON.parse(documents) : [];
+    } catch (error) {
+      console.error('Error loading documents:', error);
+      return [];
+    }
+  };
+
+  // Generate a response using the appropriate AI provider
+  const generateResponse = async (query: string) => {
+    const aiSettings = getAiSettings();
+    const documents = getDocuments();
+    
+    if (!aiSettings.apiKey) {
+      // If no API key is set, return a simulated response
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return `I'd provide information based on the company documents, but the AI service needs to be configured in the admin panel first. (This is a simulated response - in production, this would use ${aiSettings.provider} with the ${aiSettings.model} model)`;
+    }
+    
+    if (documents.length === 0 && aiSettings.ragEnabled) {
+      // If RAG is enabled but no documents are uploaded
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return "I don't have any knowledge base documents to reference. Please upload documents in the admin panel to enable more accurate responses.";
+    }
+
+    try {
+      // For demonstration, we'll simulate API calls to different providers
+      // In a real implementation, this would connect to the actual provider APIs
+      
+      // Prepare the message history
+      const messages = [
+        { role: "system", content: aiSettings.systemPrompt },
+        { role: "user", content: query }
+      ];
+      
+      // Simulate RAG by adding context from "documents"
+      let context = "";
+      if (aiSettings.ragEnabled && documents.length > 0) {
+        // In a real implementation, this would perform document similarity search
+        // For now, we'll just add document names as context
+        context = "I've analyzed these documents from your knowledge base: " + 
+          documents.map((doc: any) => doc.name).join(", ");
+      }
+      
+      if (context) {
+        messages.splice(1, 0, { role: "system", content: context });
+      }
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // For demonstration, return a simulated response
+      // In production, this would call the actual provider API
+      return `Based on my analysis ${aiSettings.ragEnabled ? 'of your knowledge base' : ''}, Alexander Oguso offers comprehensive digital transformation services including AI solutions, XR experiences, and multimedia content creation. ${query.toLowerCase().includes('ai') ? 'Our AI solutions include custom models, predictive analytics, and machine learning implementations.' : ''}${query.toLowerCase().includes('xr') ? 'Our XR experiences provide immersive AR and VR applications for customer engagement and employee training.' : ''}${query.toLowerCase().includes('multimedia') ? 'Our multimedia content includes interactive presentations, data visualizations, and engaging digital storytelling.' : ''} Would you like more specific information about any of these services?`;
+    } catch (error) {
+      console.error("Error generating response:", error);
+      throw new Error("Failed to generate response. Please check your API settings and try again.");
+    }
+  };
+
+  return { generateResponse, getAiSettings, getDocuments };
+};
+
+const ChatInterface = () => {
+  const [messages, setMessages] = useState<Message[]>(sampleMessages);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const { generateResponse } = useChatbot();
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const generateResponse = async (query: string) => {
-    // This is a simulated RAG response for now
-    // In a real implementation, this would connect to an API
-    // that would perform RAG using the admin-uploaded documents
-    
-    const aiSettings = getAiSettings();
-    
-    if (!aiSettings.apiKey) {
-      // For demonstration - in a real app, this would connect to a backend API
-      return `I'd provide information based on the company documents, but the AI service needs to be configured in the admin panel first. (This is a simulated response - in production, this would use ${aiSettings.provider} with the ${aiSettings.model} model with system prompt: "${aiSettings.systemPrompt.substring(0, 50)}..." to analyze documents uploaded by the admin.)`;
-    }
-    
-    // Simulate RAG processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Sample responses based on common queries
-    const responses: Record<string, string> = {
-      "services": "Based on our documentation, we offer AI Solutions, XR Development, and Multimedia Production services. Our AI Solutions include custom machine learning models and predictive analytics tailored to your business needs.",
-      "portfolio": "Our portfolio includes several case studies across different industries. For example, we developed an AR training solution for a manufacturing company that reduced training time by 40%.",
-      "contact": "You can contact our team via email at contact@alexanderoguso.com or schedule a consultation call through our contact page.",
-      "pricing": "Our pricing is customized based on project requirements. We offer tailored solutions with flexible engagement models including project-based, retainer, and outcome-based pricing.",
-      "default": "I've searched our knowledge base for information related to your query. Our team would be happy to provide more specific details. Would you like to schedule a consultation call to discuss your needs in detail?"
-    };
-    
-    // Find the most relevant response or use default
-    for (const [key, response] of Object.entries(responses)) {
-      if (query.toLowerCase().includes(key)) {
-        return response;
-      }
-    }
-    
-    return responses.default;
-  };
 
   const handleSendMessage = async () => {
     if (inputValue.trim()) {

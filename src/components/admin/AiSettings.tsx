@@ -209,7 +209,7 @@ const AiSettings = () => {
 
   const fetchGroqModels = async (apiKey: string): Promise<{ value: string; label: string }[]> => {
     try {
-      const response = await fetch('https://api.groq.com/v1/models', {
+      const response = await fetch('https://api.groq.com/v1/models/list', {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
@@ -222,9 +222,9 @@ const AiSettings = () => {
       
       const data = await response.json();
       
-      return data.data.map((model: any) => ({
-        value: model.id,
-        label: model.id
+      return data.models.map((model: any) => ({
+        value: model.id || model.name,
+        label: model.id || model.name
       }));
     } catch (error) {
       console.error('Error fetching Groq models:', error);
