@@ -11,6 +11,8 @@ import ContentEditor from '@/components/admin/ContentEditor';
 import ServicesEditor from '@/components/admin/ServicesEditor';
 import BlogPostEditor from '@/components/admin/BlogPostEditor';
 import PortfolioEditor from '@/components/admin/PortfolioEditor';
+import DocumentUploader from '@/components/admin/DocumentUploader';
+import AiSettings from '@/components/admin/AiSettings';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -128,6 +130,8 @@ const Admin = () => {
               <TabsTrigger value="services">Services</TabsTrigger>
               <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
               <TabsTrigger value="blog">Blog Posts</TabsTrigger>
+              <TabsTrigger value="documents">Knowledge Base</TabsTrigger>
+              <TabsTrigger value="ai">AI Settings</TabsTrigger>
             </TabsList>
             
             <TabsContent value="content" className="space-y-4">
@@ -144,6 +148,14 @@ const Admin = () => {
             
             <TabsContent value="blog" className="space-y-4">
               <BlogPostEditor />
+            </TabsContent>
+            
+            <TabsContent value="documents" className="space-y-4">
+              <DocumentUploader />
+            </TabsContent>
+            
+            <TabsContent value="ai" className="space-y-4">
+              <AiSettings />
             </TabsContent>
           </Tabs>
         </div>

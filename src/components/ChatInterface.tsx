@@ -1,13 +1,16 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Send, Plus, Search, Mic } from 'lucide-react';
+import { Send, Plus, Mic, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
   type: 'user' | 'system';
   content: React.ReactNode;
+  isLoading?: boolean;
 }
 
 const sampleMessages: Message[] = [
@@ -60,34 +63,134 @@ const sampleMessages: Message[] = [
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>(sampleMessages);
   const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  // Get AI settings from localStorage (will be set in admin panel)
+  const getAiSettings = () => {
+    try {
+      const aiSettings = localStorage.getItem('aiSettings');
+      return aiSettings ? JSON.parse(aiSettings) : {
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+        apiKey: '',
+        temperature: 0.7,
+        maxTokens: 1000
+      };
+    } catch (error) {
+      console.error('Error loading AI settings:', error);
+      return {
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+        apiKey: '',
+        temperature: 0.7,
+        maxTokens: 1000
+      };
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const generateResponse = async (query: string) => {
+    // This is a simulated RAG response for now
+    // In a real implementation, this would connect to an API
+    // that would perform RAG using the admin-uploaded documents
+    
+    const aiSettings = getAiSettings();
+    
+    if (!aiSettings.apiKey) {
+      // For demonstration - in a real app, this would connect to a backend API
+      return `I'd provide information based on the company documents, but the AI service needs to be configured in the admin panel first. (This is a simulated response - in production, this would use ${aiSettings.provider} with the ${aiSettings.model} model to analyze documents uploaded by the admin.)`;
+    }
+    
+    // Simulate RAG processing delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Sample responses based on common queries
+    const responses: Record<string, string> = {
+      "services": "Based on our documentation, we offer AI Solutions, XR Development, and Multimedia Production services. Our AI Solutions include custom machine learning models and predictive analytics tailored to your business needs.",
+      "portfolio": "Our portfolio includes several case studies across different industries. For example, we developed an AR training solution for a manufacturing company that reduced training time by 40%.",
+      "contact": "You can contact our team via email at contact@alexanderoguso.com or schedule a consultation call through our contact page.",
+      "pricing": "Our pricing is customized based on project requirements. We offer tailored solutions with flexible engagement models including project-based, retainer, and outcome-based pricing.",
+      "default": "I've searched our knowledge base for information related to your query. Our team would be happy to provide more specific details. Would you like to schedule a consultation call to discuss your needs in detail?"
+    };
+    
+    // Find the most relevant response or use default
+    for (const [key, response] of Object.entries(responses)) {
+      if (query.toLowerCase().includes(key)) {
+        return response;
+      }
+    }
+    
+    return responses.default;
+  };
+
+  const handleSendMessage = async () => {
     if (inputValue.trim()) {
-      setMessages(prev => [...prev, {
+      const userMessage = {
         id: Date.now().toString(),
-        type: 'user',
+        type: 'user' as const,
         content: inputValue
+      };
+      
+      setMessages(prev => [...prev, userMessage]);
+      
+      // Add a loading message
+      const loadingMessageId = (Date.now() + 1).toString();
+      setMessages(prev => [...prev, {
+        id: loadingMessageId,
+        type: 'system',
+        content: (
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Searching knowledge base...</span>
+          </div>
+        ),
+        isLoading: true
       }]);
       
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: (Date.now() + 1).toString(),
-          type: 'system',
-          content: (
-            <div>
-              <p>Thanks for your message! Our team would be happy to discuss how we can help with your digital transformation needs.</p>
-              <p className="mt-2">Would you like to schedule a consultation call or learn more about our services?</p>
-            </div>
-          )
-        }]);
-      }, 1000);
-      
       setInputValue('');
+      setIsLoading(true);
+      
+      try {
+        // Generate RAG response
+        const responseText = await generateResponse(inputValue);
+        
+        // Replace the loading message with the actual response
+        setMessages(prev => prev.map(msg => 
+          msg.id === loadingMessageId 
+            ? {
+                id: loadingMessageId,
+                type: 'system',
+                content: responseText
+              } 
+            : msg
+        ));
+      } catch (error) {
+        console.error('Error generating response:', error);
+        
+        // Replace loading message with error
+        setMessages(prev => prev.map(msg => 
+          msg.id === loadingMessageId 
+            ? {
+                id: loadingMessageId,
+                type: 'system',
+                content: "I'm sorry, I couldn't process your request. Please try again."
+              } 
+            : msg
+        ));
+        
+        toast({
+          title: "Error",
+          description: "Failed to generate a response. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -106,7 +209,9 @@ const ChatInterface = () => {
             key={message.id}
             className={cn(
               "max-w-3xl mx-auto",
-              message.type === 'user' ? "ml-auto mr-4 bg-primary text-primary-foreground p-3 rounded-lg rounded-tr-none" : "mr-auto ml-4 p-4"
+              message.type === 'user' 
+                ? "ml-auto mr-4 bg-primary text-primary-foreground p-3 rounded-lg rounded-tr-none" 
+                : "mr-auto ml-4 p-4"
             )}
           >
             {message.content}
@@ -129,6 +234,7 @@ const ChatInterface = () => {
               onKeyDown={handleKeyDown}
               placeholder="Ask about our digital transformation services..."
               className="pl-12 pr-12 py-6 bg-background"
+              disabled={isLoading}
             />
             <div className="absolute right-3 top-3 flex space-x-1">
               <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -139,9 +245,9 @@ const ChatInterface = () => {
                 size="icon" 
                 className="h-6 w-6"
                 onClick={handleSendMessage}
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isLoading}
               >
-                <Send className="h-5 w-5" />
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
               </Button>
             </div>
           </div>
