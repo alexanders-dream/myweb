@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Select,
   SelectContent,
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { AlertTriangle, Info } from 'lucide-react';
 
-type AiProvider = 'openai' | 'anthropic' | 'perplexity';
+type AiProvider = 'openai' | 'anthropic' | 'perplexity' | 'groq' | 'deepseek' | 'openrouter';
 
 type AiSettings = {
   provider: AiProvider;
@@ -23,6 +24,7 @@ type AiSettings = {
   temperature: number;
   maxTokens: number;
   ragEnabled: boolean;
+  systemPrompt: string;
 };
 
 // Model options for different providers
@@ -40,8 +42,26 @@ const modelOptions: Record<AiProvider, { value: string; label: string }[]> = {
     { value: 'mixtral-8x7b-instruct', label: 'Mixtral 8x7B' },
     { value: 'llama-3-sonar-small-128k', label: 'Llama 3 Sonar Small' },
     { value: 'llama-3-sonar-large-128k', label: 'Llama 3 Sonar Large' }
+  ],
+  groq: [
+    { value: 'llama-3-8b-8192', label: 'Llama 3 8B' },
+    { value: 'llama-3-70b-8192', label: 'Llama 3 70B' },
+    { value: 'gemma-7b-it', label: 'Gemma 7B IT' }
+  ],
+  deepseek: [
+    { value: 'deepseek-coder', label: 'DeepSeek Coder' },
+    { value: 'deepseek-llm-67b-chat', label: 'DeepSeek LLM 67B' }
+  ],
+  openrouter: [
+    { value: 'openai/gpt-4o', label: 'OpenAI GPT-4o' },
+    { value: 'anthropic/claude-3-opus', label: 'Anthropic Claude 3 Opus' },
+    { value: 'meta-llama/llama-3-70b-instruct', label: 'Meta Llama 3 70B' },
+    { value: 'mistralai/mistral-large', label: 'Mistral Large' }
   ]
 };
+
+// Default system prompt
+const DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant for Alexander Oguso Digital Transformation Consultancy. Provide accurate, concise information about our AI, XR, and multimedia services. Use the knowledge base to answer specific questions about our offerings, case studies, and expertise.";
 
 const AiSettings = () => {
   const [settings, setSettings] = useState<AiSettings>(() => {
@@ -52,7 +72,8 @@ const AiSettings = () => {
       apiKey: '',
       temperature: 0.7,
       maxTokens: 1000,
-      ragEnabled: true
+      ragEnabled: true,
+      systemPrompt: DEFAULT_SYSTEM_PROMPT
     };
   });
   
@@ -91,6 +112,18 @@ const AiSettings = () => {
     });
   };
 
+  const handleResetSystemPrompt = () => {
+    setSettings({
+      ...settings,
+      systemPrompt: DEFAULT_SYSTEM_PROMPT
+    });
+    
+    toast({
+      title: "System prompt reset",
+      description: "The system prompt has been reset to the default."
+    });
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">AI Provider Settings</h2>
@@ -121,6 +154,9 @@ const AiSettings = () => {
                 <SelectItem value="openai">OpenAI</SelectItem>
                 <SelectItem value="anthropic">Anthropic</SelectItem>
                 <SelectItem value="perplexity">Perplexity</SelectItem>
+                <SelectItem value="groq">Groq</SelectItem>
+                <SelectItem value="deepseek">DeepSeek</SelectItem>
+                <SelectItem value="openrouter">OpenRouter</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -215,6 +251,31 @@ const AiSettings = () => {
             </p>
           </div>
         </div>
+      </div>
+      
+      {/* System Prompt Section */}
+      <div className="space-y-3 pt-2">
+        <div className="flex justify-between items-center">
+          <Label htmlFor="systemPrompt">System Prompt</Label>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleResetSystemPrompt}
+          >
+            Reset to Default
+          </Button>
+        </div>
+        <Textarea
+          id="systemPrompt"
+          value={settings.systemPrompt}
+          onChange={(e) => handleChange('systemPrompt', e.target.value)}
+          placeholder="Enter system instructions for the AI"
+          className="min-h-[120px] font-mono text-sm"
+        />
+        <p className="text-xs text-muted-foreground">
+          The system prompt provides instructions to the AI about how it should respond. 
+          This sets the tone and behavior of the chatbot.
+        </p>
       </div>
       
       {!settings.apiKey && (

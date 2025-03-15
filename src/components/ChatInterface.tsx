@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -76,7 +75,9 @@ const ChatInterface = () => {
         model: 'gpt-4o-mini',
         apiKey: '',
         temperature: 0.7,
-        maxTokens: 1000
+        maxTokens: 1000,
+        ragEnabled: true,
+        systemPrompt: "You are a helpful assistant for Alexander Oguso Digital Transformation Consultancy."
       };
     } catch (error) {
       console.error('Error loading AI settings:', error);
@@ -85,7 +86,9 @@ const ChatInterface = () => {
         model: 'gpt-4o-mini',
         apiKey: '',
         temperature: 0.7,
-        maxTokens: 1000
+        maxTokens: 1000,
+        ragEnabled: true,
+        systemPrompt: "You are a helpful assistant for Alexander Oguso Digital Transformation Consultancy."
       };
     }
   };
@@ -103,7 +106,7 @@ const ChatInterface = () => {
     
     if (!aiSettings.apiKey) {
       // For demonstration - in a real app, this would connect to a backend API
-      return `I'd provide information based on the company documents, but the AI service needs to be configured in the admin panel first. (This is a simulated response - in production, this would use ${aiSettings.provider} with the ${aiSettings.model} model to analyze documents uploaded by the admin.)`;
+      return `I'd provide information based on the company documents, but the AI service needs to be configured in the admin panel first. (This is a simulated response - in production, this would use ${aiSettings.provider} with the ${aiSettings.model} model with system prompt: "${aiSettings.systemPrompt.substring(0, 50)}..." to analyze documents uploaded by the admin.)`;
     }
     
     // Simulate RAG processing delay
