@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -13,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle, Info, RefreshCw } from 'lucide-react';
 
 type AiProvider = 'openai' | 'anthropic' | 'perplexity' | 'groq' | 'deepseek' | 'openrouter';
 
@@ -27,8 +26,8 @@ type AiSettings = {
   systemPrompt: string;
 };
 
-// Model options for different providers
-const modelOptions: Record<AiProvider, { value: string; label: string }[]> = {
+// Fallback model options for different providers in case API calls fail
+const fallbackModelOptions: Record<AiProvider, { value: string; label: string }[]> = {
   openai: [
     { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
     { value: 'gpt-4o', label: 'GPT-4o' }
@@ -77,7 +76,192 @@ const AiSettings = () => {
     };
   });
   
+  const [modelOptions, setModelOptions] = useState<Record<AiProvider, { value: string; label: string }[]>>(fallbackModelOptions);
+  const [isLoadingModels, setIsLoadingModels] = useState<boolean>(false);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
+  
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Load models if API key is available
+    if (settings.apiKey) {
+      fetchModels(settings.provider, settings.apiKey);
+    }
+  }, [settings.provider, settings.apiKey]);
+
+  const fetchModels = async (provider: AiProvider, apiKey: string) => {
+    if (!apiKey) {
+      setLoadingError("API key is required to fetch available models");
+      return;
+    }
+
+    setIsLoadingModels(true);
+    setLoadingError(null);
+
+    try {
+      let models: { value: string; label: string }[] = [];
+
+      switch (provider) {
+        case 'openai':
+          models = await fetchOpenAiModels(apiKey);
+          break;
+        case 'anthropic':
+          models = await fetchAnthropicModels(apiKey);
+          break;
+        case 'perplexity':
+          models = await fetchPerplexityModels(apiKey);
+          break;
+        case 'groq':
+          models = await fetchGroqModels(apiKey);
+          break;
+        case 'deepseek':
+          models = await fetchDeepseekModels(apiKey);
+          break;
+        case 'openrouter':
+          models = await fetchOpenRouterModels(apiKey);
+          break;
+      }
+
+      if (models.length > 0) {
+        setModelOptions(prev => ({
+          ...prev,
+          [provider]: models
+        }));
+        // Set model to first available model if current one isn't in the list
+        const modelExists = models.some(m => m.value === settings.model);
+        if (!modelExists && models.length > 0) {
+          setSettings(prev => ({
+            ...prev,
+            model: models[0].value
+          }));
+        }
+        toast({
+          title: "Models loaded",
+          description: `Successfully loaded ${models.length} models from ${provider}`
+        });
+      } else {
+        // If no models returned, keep using fallbacks
+        toast({
+          title: "No models found",
+          description: "Using default model list. Check your API key.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error(`Error fetching ${provider} models:`, error);
+      setLoadingError(`Failed to fetch models from ${provider}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast({
+        title: "Error loading models",
+        description: `Failed to fetch models from ${provider}. Using default list.`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  // API call functions for each provider
+  const fetchOpenAiModels = async (apiKey: string): Promise<{ value: string; label: string }[]> => {
+    try {
+      const response = await fetch('https://api.openai.com/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Filter for chat models and GPT models
+      const chatModels = data.data
+        .filter((model: any) => 
+          model.id.includes('gpt') && 
+          !model.id.includes('instruct') && 
+          !model.id.includes('-if')
+        )
+        .map((model: any) => ({
+          value: model.id,
+          label: model.id
+        }));
+      
+      return chatModels;
+    } catch (error) {
+      console.error('Error fetching OpenAI models:', error);
+      return fallbackModelOptions.openai;
+    }
+  };
+
+  const fetchAnthropicModels = async (apiKey: string): Promise<{ value: string; label: string }[]> => {
+    // Note: Anthropic doesn't have a models endpoint in their v1 API
+    // Using fallback models for Anthropic
+    return fallbackModelOptions.anthropic;
+  };
+
+  const fetchPerplexityModels = async (apiKey: string): Promise<{ value: string; label: string }[]> => {
+    // Note: Perplexity doesn't have a public models endpoint
+    // Using fallback models for Perplexity
+    return fallbackModelOptions.perplexity;
+  };
+
+  const fetchGroqModels = async (apiKey: string): Promise<{ value: string; label: string }[]> => {
+    try {
+      const response = await fetch('https://api.groq.com/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      return data.data.map((model: any) => ({
+        value: model.id,
+        label: model.id
+      }));
+    } catch (error) {
+      console.error('Error fetching Groq models:', error);
+      return fallbackModelOptions.groq;
+    }
+  };
+
+  const fetchDeepseekModels = async (apiKey: string): Promise<{ value: string; label: string }[]> => {
+    // DeepSeek API doesn't have a public models endpoint
+    return fallbackModelOptions.deepseek;
+  };
+
+  const fetchOpenRouterModels = async (apiKey: string): Promise<{ value: string; label: string }[]> => {
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      return data.data.map((model: any) => ({
+        value: model.id,
+        label: `${model.name} (${model.context_length} ctx)`
+      }));
+    } catch (error) {
+      console.error('Error fetching OpenRouter models:', error);
+      return fallbackModelOptions.openrouter;
+    }
+  };
 
   const handleChange = (field: keyof AiSettings, value: string | number | boolean) => {
     if (field === 'provider') {
@@ -90,6 +274,18 @@ const AiSettings = () => {
       });
     } else {
       setSettings({ ...settings, [field]: value });
+    }
+  };
+
+  const handleRefreshModels = () => {
+    if (settings.apiKey) {
+      fetchModels(settings.provider, settings.apiKey);
+    } else {
+      toast({
+        title: "API Key Required",
+        description: "Please enter a valid API key to fetch models",
+        variant: "destructive"
+      });
     }
   };
 
@@ -162,13 +358,26 @@ const AiSettings = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="model">Model</Label>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="model">Model</Label>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleRefreshModels}
+                disabled={isLoadingModels || !settings.apiKey}
+              >
+                <RefreshCw className={`h-4 w-4 mr-1 ${isLoadingModels ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
+            
             <Select
               value={settings.model}
               onValueChange={(value) => handleChange('model', value)}
+              disabled={isLoadingModels}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select model" />
+                <SelectValue placeholder={isLoadingModels ? "Loading models..." : "Select model"} />
               </SelectTrigger>
               <SelectContent>
                 {modelOptions[settings.provider].map(model => (
@@ -178,6 +387,14 @@ const AiSettings = () => {
                 ))}
               </SelectContent>
             </Select>
+            
+            {loadingError && (
+              <p className="text-xs text-destructive">{loadingError}</p>
+            )}
+            
+            {isLoadingModels && (
+              <p className="text-xs text-muted-foreground">Loading available models...</p>
+            )}
           </div>
           
           <div className="space-y-2">
