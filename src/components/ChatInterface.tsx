@@ -5,6 +5,8 @@ import { Button } from './ui/button';
 import { Send, Plus, Mic, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { generateResponse } from '@/services/chatService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
   id: string;
@@ -60,110 +62,13 @@ const sampleMessages: Message[] = [
   }
 ];
 
-// Separate the chat functionality into its own hook
-const useChatbot = () => {
-  const { toast } = useToast();
-  
-  // Get AI settings from localStorage (will be set in admin panel)
-  const getAiSettings = () => {
-    try {
-      const aiSettings = localStorage.getItem('aiSettings');
-      return aiSettings ? JSON.parse(aiSettings) : {
-        provider: 'openai',
-        model: 'gpt-4o-mini',
-        apiKey: '',
-        temperature: 0.7,
-        maxTokens: 1000,
-        ragEnabled: true,
-        systemPrompt: "You are a helpful assistant for Alexander Oguso Digital Transformation Consultancy."
-      };
-    } catch (error) {
-      console.error('Error loading AI settings:', error);
-      return {
-        provider: 'openai',
-        model: 'gpt-4o-mini',
-        apiKey: '',
-        temperature: 0.7,
-        maxTokens: 1000,
-        ragEnabled: true,
-        systemPrompt: "You are a helpful assistant for Alexander Oguso Digital Transformation Consultancy."
-      };
-    }
-  };
-
-  // Get documents from localStorage
-  const getDocuments = () => {
-    try {
-      const documents = localStorage.getItem('knowledgeBaseDocs');
-      return documents ? JSON.parse(documents) : [];
-    } catch (error) {
-      console.error('Error loading documents:', error);
-      return [];
-    }
-  };
-
-  // Generate a response using the appropriate AI provider
-  const generateResponse = async (query: string) => {
-    const aiSettings = getAiSettings();
-    const documents = getDocuments();
-    
-    if (!aiSettings.apiKey) {
-      // If no API key is set, return a simulated response
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return `I'd provide information based on the company documents, but the AI service needs to be configured in the admin panel first. (This is a simulated response - in production, this would use ${aiSettings.provider} with the ${aiSettings.model} model)`;
-    }
-    
-    if (documents.length === 0 && aiSettings.ragEnabled) {
-      // If RAG is enabled but no documents are uploaded
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return "I don't have any knowledge base documents to reference. Please upload documents in the admin panel to enable more accurate responses.";
-    }
-
-    try {
-      // For demonstration, we'll simulate API calls to different providers
-      // In a real implementation, this would connect to the actual provider APIs
-      
-      // Prepare the message history
-      const messages = [
-        { role: "system", content: aiSettings.systemPrompt },
-        { role: "user", content: query }
-      ];
-      
-      // Simulate RAG by adding context from "documents"
-      let context = "";
-      if (aiSettings.ragEnabled && documents.length > 0) {
-        // In a real implementation, this would perform document similarity search
-        // For now, we'll just add document names as context
-        context = "I've analyzed these documents from your knowledge base: " + 
-          documents.map((doc: any) => doc.name).join(", ");
-      }
-      
-      if (context) {
-        messages.splice(1, 0, { role: "system", content: context });
-      }
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // For demonstration, return a simulated response
-      // In production, this would call the actual provider API
-      return `Based on my analysis ${aiSettings.ragEnabled ? 'of your knowledge base' : ''}, Alexander Oguso offers comprehensive digital transformation services including AI solutions, XR experiences, and multimedia content creation. ${query.toLowerCase().includes('ai') ? 'Our AI solutions include custom models, predictive analytics, and machine learning implementations.' : ''}${query.toLowerCase().includes('xr') ? 'Our XR experiences provide immersive AR and VR applications for customer engagement and employee training.' : ''}${query.toLowerCase().includes('multimedia') ? 'Our multimedia content includes interactive presentations, data visualizations, and engaging digital storytelling.' : ''} Would you like more specific information about any of these services?`;
-    } catch (error) {
-      console.error("Error generating response:", error);
-      throw new Error("Failed to generate response. Please check your API settings and try again.");
-    }
-  };
-
-  return { generateResponse, getAiSettings, getDocuments };
-};
-
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>(sampleMessages);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { generateResponse } = useChatbot();
+  const { user } = useAuth();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -197,7 +102,7 @@ const ChatInterface = () => {
       setIsLoading(true);
       
       try {
-        // Generate RAG response
+        // Call the backend function to generate a response
         const responseText = await generateResponse(inputValue);
         
         // Replace the loading message with the actual response
@@ -294,6 +199,14 @@ const ChatInterface = () => {
           </div>
           <div className="text-xs text-muted-foreground text-center">
             Alexander Oguso Digital Transformation Consultancy • Powering the future through innovation
+            {!user && (
+              <div className="mt-1">
+                <Button variant="link" asChild className="text-xs p-0 h-auto">
+                  <a href="/login">Login</a>
+                </Button>
+                {' '}to enable full AI capabilities
+              </div>
+            )}
           </div>
         </div>
       </div>

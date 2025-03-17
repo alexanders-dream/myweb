@@ -1,4 +1,5 @@
 
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export type AiProvider = 'openai' | 'anthropic' | 'perplexity' | 'groq' | 'deepseek' | 'openrouter';
@@ -21,99 +22,247 @@ export type Document = {
   type: string;
 };
 
-export const getAiSettings = (): AiSettings => {
+// Get AI settings from Supabase
+export const getAiSettings = async (): Promise<AiSettings> => {
   try {
-    const aiSettings = localStorage.getItem('aiSettings');
-    return aiSettings ? JSON.parse(aiSettings) : {
-      provider: 'openai',
-      model: 'gpt-4o-mini',
-      apiKey: '',
-      temperature: 0.7,
-      maxTokens: 1000,
-      ragEnabled: true,
-      systemPrompt: "You are a helpful assistant for Alexander Oguso Digital Transformation Consultancy."
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return getDefaultAiSettings();
+    }
+    
+    const { data, error } = await supabase
+      .from('ai_settings')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .single();
+    
+    if (error || !data) {
+      console.error('Error loading AI settings:', error);
+      return getDefaultAiSettings();
+    }
+    
+    return {
+      provider: data.provider as AiProvider,
+      model: data.model,
+      apiKey: data.api_key || '',
+      temperature: data.temperature,
+      maxTokens: data.max_tokens,
+      ragEnabled: data.rag_enabled,
+      systemPrompt: data.system_prompt
     };
   } catch (error) {
     console.error('Error loading AI settings:', error);
-    return {
-      provider: 'openai',
-      model: 'gpt-4o-mini',
-      apiKey: '',
-      temperature: 0.7,
-      maxTokens: 1000,
-      ragEnabled: true,
-      systemPrompt: "You are a helpful assistant for Alexander Oguso Digital Transformation Consultancy."
-    };
+    return getDefaultAiSettings();
   }
 };
 
-export const getDocuments = (): Document[] => {
+// Set AI settings to Supabase
+export const saveAiSettings = async (settings: AiSettings): Promise<boolean> => {
   try {
-    const documents = localStorage.getItem('knowledgeBaseDocs');
-    return documents ? JSON.parse(documents) : [];
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      toast({
+        title: "Not authenticated",
+        description: "Please log in to save settings",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    const { error } = await supabase
+      .from('ai_settings')
+      .update({
+        provider: settings.provider,
+        model: settings.model,
+        api_key: settings.apiKey,
+        temperature: settings.temperature,
+        max_tokens: settings.maxTokens,
+        rag_enabled: settings.ragEnabled,
+        system_prompt: settings.systemPrompt
+      })
+      .eq('user_id', session.user.id);
+    
+    if (error) {
+      console.error('Error saving AI settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save AI settings",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving AI settings:', error);
+    return false;
+  }
+};
+
+// Get documents from Supabase
+export const getDocuments = async (): Promise<Document[]> => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return [];
+    }
+    
+    const { data, error } = await supabase
+      .from('knowledge_base_docs')
+      .select('id, name, content, created_at')
+      .eq('user_id', session.user.id);
+    
+    if (error) {
+      console.error('Error loading documents:', error);
+      return [];
+    }
+    
+    return data.map(doc => ({
+      id: doc.id,
+      name: doc.name,
+      size: doc.content.length,
+      date: doc.created_at,
+      type: getDocumentType(doc.name)
+    }));
   } catch (error) {
     console.error('Error loading documents:', error);
     return [];
   }
 };
 
-// This function would be implemented to make actual API calls in production
-export const callAiProvider = async (provider: AiProvider, model: string, apiKey: string, messages: any[], temperature: number, maxTokens: number) => {
-  // This is a placeholder for real API calls
-  // In a production environment, this would call different provider APIs
-  
-  console.log(`Calling ${provider} API with model ${model}`);
-  
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // For demonstration purposes, return a simulated response
-  return {
-    content: "This is a simulated response. In production, this would come from the AI provider API."
-  };
+// Delete document from Supabase
+export const deleteDocument = async (id: string): Promise<boolean> => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      toast({
+        title: "Not authenticated",
+        description: "Please log in to delete documents",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    const { error } = await supabase
+      .from('knowledge_base_docs')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', session.user.id);
+    
+    if (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete document",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    return false;
+  }
 };
 
-export const generateResponse = async (query: string): Promise<string> => {
-  const settings = getAiSettings();
-  const documents = getDocuments();
-  
-  if (!settings.apiKey) {
-    // If no API key is set, return a simulated response
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return `I'd provide information based on the company documents, but the AI service needs to be configured in the admin panel first. (This is a simulated response - in production, this would use ${settings.provider} with the ${settings.model} model)`;
-  }
-  
-  if (documents.length === 0 && settings.ragEnabled) {
-    // If RAG is enabled but no documents are uploaded
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return "I don't have any knowledge base documents to reference. Please upload documents in the admin panel to enable more accurate responses.";
-  }
-
+// Upload document to Supabase via edge function
+export const uploadDocument = async (name: string, content: string): Promise<boolean> => {
   try {
-    // Prepare the message history
-    const messages = [
-      { role: "system", content: settings.systemPrompt },
-      { role: "user", content: query }
-    ];
+    const { data: { session } } = await supabase.auth.getSession();
     
-    // Simulate RAG by adding context from "documents"
-    let context = "";
-    if (settings.ragEnabled && documents.length > 0) {
-      // In a real implementation, this would perform document similarity search
-      // For now, we'll just add document names as context
-      context = "I've analyzed these documents from your knowledge base: " + 
-        documents.map((doc: Document) => doc.name).join(", ");
+    if (!session) {
+      toast({
+        title: "Not authenticated",
+        description: "Please log in to upload documents",
+        variant: "destructive"
+      });
+      return false;
     }
     
-    if (context) {
-      messages.splice(1, 0, { role: "system", content: context });
+    const { data, error } = await supabase.functions.invoke('process-document', {
+      body: {
+        name,
+        content
+      }
+    });
+    
+    if (error || !data.success) {
+      console.error('Error uploading document:', error || data.error);
+      toast({
+        title: "Error",
+        description: "Failed to upload document",
+        variant: "destructive"
+      });
+      return false;
     }
     
-    // For demonstration, return a simulated response
-    // In production, this would call the actual provider API
-    return `Based on my analysis ${settings.ragEnabled ? 'of your knowledge base' : ''}, Alexander Oguso offers comprehensive digital transformation services including AI solutions, XR experiences, and multimedia content creation. ${query.toLowerCase().includes('ai') ? 'Our AI solutions include custom models, predictive analytics, and machine learning implementations.' : ''}${query.toLowerCase().includes('xr') ? 'Our XR experiences provide immersive AR and VR applications for customer engagement and employee training.' : ''}${query.toLowerCase().includes('multimedia') ? 'Our multimedia content includes interactive presentations, data visualizations, and engaging digital storytelling.' : ''} Would you like more specific information about any of these services?`;
+    return true;
+  } catch (error) {
+    console.error('Error uploading document:', error);
+    return false;
+  }
+};
+
+// Generate response from AI via edge function
+export const generateResponse = async (query: string): Promise<string> => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      // If not logged in, return a simulated response
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return `I'd provide information based on the company documents, but you need to be logged in first.`;
+    }
+    
+    // Generate a session ID if there isn't one already
+    const sessionId = localStorage.getItem('chatSessionId') || `session-${Date.now()}`;
+    localStorage.setItem('chatSessionId', sessionId);
+    
+    const { data, error } = await supabase.functions.invoke('generate-chat-response', {
+      body: {
+        query,
+        sessionId
+      }
+    });
+    
+    if (error) {
+      console.error('Error generating response:', error);
+      throw new Error("Failed to generate response. Please check your API settings and try again.");
+    }
+    
+    return data.response || "Sorry, I couldn't generate a response at this time.";
   } catch (error) {
     console.error("Error generating response:", error);
     throw new Error("Failed to generate response. Please check your API settings and try again.");
   }
+};
+
+// Helper functions
+const getDefaultAiSettings = (): AiSettings => {
+  return {
+    provider: 'openai',
+    model: 'gpt-4o-mini',
+    apiKey: '',
+    temperature: 0.7,
+    maxTokens: 1000,
+    ragEnabled: true,
+    systemPrompt: "You are a helpful assistant for Alexander Oguso Digital Transformation Consultancy."
+  };
+};
+
+const getDocumentType = (fileName: string): string => {
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+  const extensionMap: Record<string, string> = {
+    'pdf': 'application/pdf',
+    'txt': 'text/plain',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  };
+  
+  return extensionMap[extension] || 'application/octet-stream';
 };

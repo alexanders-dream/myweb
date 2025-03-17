@@ -1,82 +1,117 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Trash2, Upload, FileText, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-type Document = {
-  id: string;
-  name: string;
-  size: number;
-  date: string;
-  type: string;
-};
+import { Document, getDocuments, deleteDocument } from '@/services/chatService';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const DocumentUploader = () => {
-  const [documents, setDocuments] = useState<Document[]>(() => {
-    const savedDocs = localStorage.getItem('knowledgeBaseDocs');
-    return savedDocs ? JSON.parse(savedDocs) : [];
-  });
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = async () => {
+    setIsLoading(true);
+    try {
+      const docs = await getDocuments();
+      setDocuments(docs);
+    } catch (error) {
+      console.error('Error loading documents:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load documents',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     
     setIsUploading(true);
     
-    // Simulate file processing delay
-    setTimeout(() => {
-      const newDocs: Document[] = [];
-      
-      Array.from(e.target.files || []).forEach(file => {
-        // Check if file type is allowed
-        if (!['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type)) {
-          toast({
-            title: "Invalid file type",
-            description: `${file.name} is not a supported document type. Please upload PDF, TXT, DOC, or DOCX files.`,
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        newDocs.push({
-          id: Math.random().toString(36).substring(2, 15),
-          name: file.name,
-          size: file.size,
-          date: new Date().toISOString(),
-          type: file.type
-        });
-      });
-      
-      if (newDocs.length > 0) {
-        const updatedDocs = [...documents, ...newDocs];
-        setDocuments(updatedDocs);
-        localStorage.setItem('knowledgeBaseDocs', JSON.stringify(updatedDocs));
-        
+    for (const file of Array.from(e.target.files)) {
+      // Check file type
+      if (!['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type)) {
         toast({
-          title: "Documents uploaded",
-          description: `Successfully uploaded ${newDocs.length} document(s)`,
+          title: "Invalid file type",
+          description: `${file.name} is not a supported document type. Please upload PDF, TXT, DOC, or DOCX files.`,
+          variant: "destructive"
         });
+        continue;
       }
       
-      setIsUploading(false);
-      // Clear the input
-      e.target.value = '';
-    }, 1500);
+      try {
+        // Read file content
+        const content = await readFileContent(file);
+        
+        // Upload to Supabase via edge function
+        const { data, error } = await supabase.functions.invoke('process-document', {
+          body: {
+            name: file.name,
+            content
+          }
+        });
+        
+        if (error || !data.success) {
+          throw new Error(error?.message || data?.error || 'Failed to upload document');
+        }
+        
+        toast({
+          title: "Document uploaded",
+          description: `Successfully uploaded ${file.name}`,
+        });
+      } catch (error) {
+        console.error('Error uploading document:', error);
+        toast({
+          title: "Upload failed",
+          description: `Failed to upload ${file.name}`,
+          variant: "destructive"
+        });
+      }
+    }
+    
+    // Refresh the documents list
+    await loadDocuments();
+    
+    setIsUploading(false);
+    // Clear the input
+    e.target.value = '';
   };
 
-  const handleDelete = (id: string) => {
-    const updatedDocs = documents.filter(doc => doc.id !== id);
-    setDocuments(updatedDocs);
-    localStorage.setItem('knowledgeBaseDocs', JSON.stringify(updatedDocs));
-    
-    toast({
-      title: "Document removed",
-      description: "The document has been removed from your knowledge base.",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await deleteDocument(id);
+      
+      if (success) {
+        // Update the local state
+        setDocuments(prev => prev.filter(doc => doc.id !== id));
+        
+        toast({
+          title: "Document removed",
+          description: "The document has been removed from your knowledge base.",
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete document",
+        variant: "destructive"
+      });
+    }
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -102,6 +137,42 @@ const DocumentUploader = () => {
     };
     return types[mimeType] || 'Document';
   };
+
+  // Helper function to read file content
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          resolve(event.target.result as string);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      
+      reader.onerror = () => {
+        reject(new Error('Error reading file'));
+      };
+      
+      reader.readAsText(file);
+    });
+  };
+
+  // If not authenticated, show message
+  if (!user) {
+    return (
+      <div className="border rounded-lg p-8 text-center">
+        <div className="flex flex-col items-center justify-center">
+          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">Authentication Required</h3>
+          <p className="text-muted-foreground mt-2">
+            Please log in to manage your knowledge base documents.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -134,7 +205,14 @@ const DocumentUploader = () => {
         Upload PDF, TXT, DOC, or DOCX files that will be used by the AI to provide relevant answers to user queries.
       </div>
       
-      {documents.length > 0 ? (
+      {isLoading ? (
+        <div className="border rounded-lg p-8 text-center">
+          <div className="flex flex-col items-center justify-center">
+            <FileText className="h-12 w-12 text-muted-foreground mb-4 animate-pulse" />
+            <h3 className="text-lg font-medium">Loading documents...</h3>
+          </div>
+        </div>
+      ) : documents.length > 0 ? (
         <div className="border rounded-lg overflow-hidden">
           <table className="w-full">
             <thead className="bg-muted">
