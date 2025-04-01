@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Trash2, Upload, FileText, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Document, getDocuments, deleteDocument } from '@/services/chatService';
+import { Document, getDocuments, deleteDocument } from '@/services/documentService';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 

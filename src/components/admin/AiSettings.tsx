@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { AiSettings as AiSettingsType, getAiSettings, saveAiSettings } from '@/services/chatService';
+import { AiSettings as AiSettingsType, getAiSettings, saveAiSettings } from '@/services/aiSettings';
 
 const AiSettings = () => {
   const [settings, setSettings] = useState<AiSettingsType>({
@@ -77,7 +76,6 @@ const AiSettings = () => {
     }));
   };
   
-  // Map of available models by provider
   const modelsByProvider: Record<string, string[]> = {
     openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
     anthropic: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
@@ -87,7 +85,6 @@ const AiSettings = () => {
     openrouter: ['openrouter-mix', 'openrouter-openai', 'openrouter-anthropic'],
   };
   
-  // If not authenticated, show message
   if (!user) {
     return (
       <Card>
@@ -132,7 +129,6 @@ const AiSettings = () => {
               value={settings.provider} 
               onValueChange={(value) => {
                 handleChange('provider', value);
-                // Reset model to first available model when provider changes
                 handleChange('model', modelsByProvider[value][0]);
               }}
             >
