@@ -6,13 +6,6 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
 import { Button } from '@/components/ui/button';
 import { Home } from 'lucide-react';
-import ImmersiveHero from '@/components/ImmersiveHero';
-import Services from '@/components/Services';
-import Portfolio from '@/components/Portfolio';
-import CaseStudies from '@/components/CaseStudies';
-import Contact from '@/components/Contact';
-import Footer from '@/components/Footer';
-import ScrollReveal from '@/components/ScrollReveal';
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -38,8 +31,8 @@ const Index = () => {
         ) : (
           <div className="flex h-screen overflow-hidden">
             <AppSidebar />
-            <div className="flex-1 overflow-auto">
-              <header className="fixed top-0 left-0 right-0 z-50 p-4 backdrop-blur-md bg-background/70 border-b border-border flex items-center justify-between">
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <header className="p-4 border-b border-border flex items-center justify-between">
                 <Link to="/" className="text-2xl font-bold text-primary">
                   Alexander Oguso
                 </Link>
@@ -52,26 +45,8 @@ const Index = () => {
                   </Link>
                 </nav>
               </header>
-              <div>
-                <ImmersiveHero />
-                
-                <ScrollReveal>
-                  <Services />
-                </ScrollReveal>
-                
-                <ScrollReveal delay={200}>
-                  <Portfolio />
-                </ScrollReveal>
-                
-                <ScrollReveal delay={300}>
-                  <CaseStudies />
-                </ScrollReveal>
-                
-                <ScrollReveal delay={400}>
-                  <Contact />
-                </ScrollReveal>
-                
-                <Footer />
+              <div className="flex-1 overflow-hidden">
+                <ChatInterface />
               </div>
             </div>
           </div>
