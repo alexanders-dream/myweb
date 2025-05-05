@@ -21,18 +21,27 @@ import {
   BrainCircuit,
   Layers,
   Video,
-  LockKeyhole
+  LockKeyhole,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/components/ThemeProvider';
+import { Switch } from '@/components/ui/switch';
 
 const AppSidebar = () => {
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const authStatus = localStorage.getItem('isAdminAuthenticated') === 'true';
     setIsAuthenticated(authStatus);
   }, []);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   return (
     <Sidebar>
@@ -143,6 +152,25 @@ const AppSidebar = () => {
                 <span>Admin Panel{isAuthenticated ? " (Logged In)" : ""}</span>
               </Link>
             </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          {/* Theme toggle switch */}
+          <SidebarMenuItem>
+            <div className="px-3 py-2 flex items-center justify-between">
+              <div className="flex items-center">
+                {theme === 'dark' ? (
+                  <Moon className="mr-2 h-4 w-4" />
+                ) : (
+                  <Sun className="mr-2 h-4 w-4" />
+                )}
+                <span>{theme === 'dark' ? 'Dark' : 'Light'} Mode</span>
+              </div>
+              <Switch 
+                checked={theme === 'dark'} 
+                onCheckedChange={toggleTheme}
+                aria-label="Toggle dark mode"
+              />
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
