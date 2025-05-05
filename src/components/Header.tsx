@@ -2,6 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { ThemeToggle } from './ThemeToggle';
 
 const Header = () => {
   return (
@@ -18,6 +19,7 @@ const Header = () => {
           <p className="text-xs text-muted-foreground">Digital Transformation Consultancy</p>
         </div>
       </Link>
+      <ThemeToggle />
     </header>
   );
 };
