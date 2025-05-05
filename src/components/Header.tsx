@@ -11,8 +11,12 @@ const Header = () => {
       "flex items-center justify-between"
     )}>
       <Link to="/" className="flex items-center space-x-2">
-        <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-          AO
+        <div className="h-8 w-8 overflow-hidden rounded-md">
+          <img 
+            src="/lovable-uploads/060b31f6-ea45-490a-89da-eb7c894826d8.png" 
+            alt="Alexander Oguso Logo" 
+            className="h-full w-full object-cover"
+          />
         </div>
         <div>
           <h1 className="font-semibold text-lg">Alexander Oguso</h1>

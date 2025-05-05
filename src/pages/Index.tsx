@@ -24,8 +24,17 @@ const Index = () => {
       <div className="min-h-screen flex flex-col w-full bg-background noise-bg">
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="animate-pulse text-primary text-2xl font-bold">
-              Alexander Oguso Digital Transformation
+            <div className="flex flex-col items-center">
+              <div className="h-16 w-16 mb-4">
+                <img 
+                  src="/lovable-uploads/060b31f6-ea45-490a-89da-eb7c894826d8.png" 
+                  alt="Alexander Oguso Logo" 
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div className="animate-pulse text-primary text-2xl font-bold">
+                Alexander Oguso Digital Transformation
+              </div>
             </div>
           </div>
         ) : (
@@ -33,8 +42,15 @@ const Index = () => {
             <AppSidebar />
             <div className="flex-1 overflow-hidden flex flex-col">
               <header className="p-4 border-b border-border flex items-center justify-between">
-                <Link to="/" className="text-2xl font-bold text-primary">
-                  Alexander Oguso
+                <Link to="/" className="flex items-center gap-2">
+                  <div className="h-8 w-8 overflow-hidden rounded-md">
+                    <img 
+                      src="/lovable-uploads/060b31f6-ea45-490a-89da-eb7c894826d8.png" 
+                      alt="Alexander Oguso Logo" 
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <span className="text-2xl font-bold text-primary">Alexander Oguso</span>
                 </Link>
                 <nav className="flex items-center space-x-4">
                   <Link to="/">
